@@ -1,4 +1,4 @@
-Beam Provider Reference Documentation Doclet
+Gyro Provider Reference Documentation Doclet
 ============================================
 
 This doclet extracts reference documentation for provider implements from
