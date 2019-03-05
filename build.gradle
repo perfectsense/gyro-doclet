@@ -3,6 +3,7 @@ plugins {
     id 'maven-publish'
     id 'java'
     id 'com.github.johnrengelman.shadow' version "4.0.3"
+    id 'checkstyle'
 }
 
 defaultTasks 'shadowJar'
@@ -11,21 +12,58 @@ sourceCompatibility = 1.8
 
 dependencies {
     compile "com.google.guava:guava:23.0"
-    compile project(":gyro-core")
+    compile "gyro:gyro-core:0.5"
     compile files("${System.getProperty('java.home')}/../lib/tools.jar")
+
+    checkstyle 'com.puppycrawl.tools:checkstyle:8.15'
 }
 
+repositories {
+    mavenLocal()
+    mavenCentral()
+}
 
 publishing {
     publications {
         maven(MavenPublication) {
             groupId = 'gyro'
             artifactId = 'doclet'
-            version = '0.5'
+            version = "0.14-SNAPSHOT"
 
             from components.java
         }
     }
+
+    repositories {
+        maven {
+            credentials {
+                username System.getenv("GRADLE_DEPLOY_USER")
+                password System.getenv("GRADLE_DEPLOY_PASSWORD")
+            }
+
+            if (project.version.endsWith('-SNAPSHOT')) {
+                url "https://artifactory.psdops.com/gyro-snapshots"
+            } else {
+                url "https://artifactory.psdops.com/gyro-releases"
+            }
+        }
+    }
+}
+
+checkstyle {
+    toolVersion = '6.13'
+    configFile rootProject.file('config/checkstyle.xml')
+    checkstyleMain.enabled = false
+    checkstyleTest.enabled = false
+}
+
+task checkstyle(type: Checkstyle) {
+    configFile rootProject.file('config/checkstyle.xml')
+    source 'src'
+    include '**/*.java'
+    exclude '**/generated-src/**'
+
+    classpath = files()
 }
 
 shadowJar {
@@ -33,4 +71,4 @@ shadowJar {
     classifier = ''
 }
 
-tasks.build.dependsOn tasks.shadowJar
+build.dependsOn tasks.shadowJar
