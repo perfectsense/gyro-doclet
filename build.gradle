@@ -44,7 +44,7 @@ publishing {
     publications {
         maven(MavenPublication) {
             groupId = 'gyro'
-            artifactId = 'doclet'
+            artifactId = 'gyro-doclet'
 
             from components.java
         }
