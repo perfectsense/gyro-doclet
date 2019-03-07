@@ -8,6 +8,12 @@ plugins {
 
 defaultTasks 'shadowJar'
 
+if (System.getenv("TRAVIS_BRANCH") == null) {
+    check.dependsOn 'shadowJar', 'publishToMavenLocal'
+} else {
+    check.dependsOn 'shadowJar', 'publish'
+}
+
 sourceCompatibility = 1.8
 
 dependencies {
