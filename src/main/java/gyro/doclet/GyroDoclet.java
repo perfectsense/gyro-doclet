@@ -46,7 +46,9 @@ public class GyroDoclet extends Doclet {
             Map<String, String> groupDocs = docs.computeIfAbsent(generator.getGroupName(), m -> new HashMap());
             groupDocs.put(generator.getName(), generator.generate());
 
-            providerPackage = generator.getProviderPackage();
+            if (providerPackage.equals("")) {
+                providerPackage = generator.getProviderPackage();
+            }
         }
 
         /*
