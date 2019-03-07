@@ -47,11 +47,10 @@ repositories {
 
 publishing {
     publications {
-        maven(MavenPublication) {
+        shadow(MavenPublication) { publication ->
+            project.shadow.component(publication)
             groupId = 'gyro'
             artifactId = 'gyro-doclet'
-
-            from components.java
         }
     }
 
