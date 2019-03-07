@@ -14,9 +14,14 @@ if (System.getenv("TRAVIS_BRANCH") == null) {
     check.dependsOn 'publishToMavenLocal'
     publishToMavenLocal.dependsOn 'shadowJar'
 } else {
-    check.dependsOn 'publish', 'shadowJar'
-    publish.dependsOn 'shadowJar'
+    check.dependsOn 'publish'
 }
+
+tasks.jar.configure {
+    classifier = 'default'
+}
+
+assemble.dependsOn shadowJar
 
 sourceCompatibility = 1.8
 
@@ -86,5 +91,3 @@ shadowJar {
     baseName = 'gyro-doclet'
     classifier = ''
 }
-
-build.dependsOn tasks.shadowJar
