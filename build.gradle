@@ -6,12 +6,16 @@ plugins {
     id 'checkstyle'
 }
 
+version = "0.14-SNAPSHOT"
+
 defaultTasks 'shadowJar'
 
 if (System.getenv("TRAVIS_BRANCH") == null) {
-    check.dependsOn 'shadowJar', 'publishToMavenLocal'
+    check.dependsOn 'publishToMavenLocal'
+    publishToMavenLocal.dependsOn 'shadowJar'
 } else {
-    check.dependsOn 'shadowJar', 'publish'
+    check.dependsOn 'publish', 'shadowJar'
+    publish.dependsOn 'shadowJar'
 }
 
 sourceCompatibility = 1.8
@@ -41,7 +45,6 @@ publishing {
         maven(MavenPublication) {
             groupId = 'gyro'
             artifactId = 'doclet'
-            version = "0.14-SNAPSHOT"
 
             from components.java
         }
