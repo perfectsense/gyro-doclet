@@ -37,7 +37,7 @@ public class GyroDoclet extends Doclet {
         String providerPackage = "";
 
         for (ClassDoc doc : root.classes()) {
-            if (doc.isAbstract()) {
+            if (doc.isAbstract() || !ResourceDocGenerator.isResource(doc)) {
                 continue;
             }
 

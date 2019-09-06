@@ -1,7 +1,6 @@
 package gyro.doclet;
 
 import com.google.common.base.CaseFormat;
-import com.psddev.dari.util.ObjectUtils;
 import com.sun.javadoc.AnnotationDesc;
 import com.sun.javadoc.ClassDoc;
 import com.sun.javadoc.MethodDoc;
@@ -35,13 +34,11 @@ public class ResourceDocGenerator {
         }
 
         for (AnnotationDesc annotationDesc : doc.annotations()) {
-            if (annotationDesc.annotationType().name().equals("ResourceName")) {
+            if (annotationDesc.annotationType().name().equals("Type")) {
                 for (AnnotationDesc.ElementValuePair pair : annotationDesc.elementValues()) {
                     if (pair.element().name().equals("value")) {
                         name = (String) pair.value().value();
                         break;
-                    } else if (pair.element().name().equals("parent") && pair.value().value() != null) {
-                        isSubresource = true;
                     }
                 }
             }
@@ -125,6 +122,21 @@ public class ResourceDocGenerator {
 
     public static String repeat(String c, int r) {
         return new String(new char[r]).replace("\0", c);
+    }
+
+    public static boolean isResource(ClassDoc classDoc) {
+        boolean isResource = false;
+        ClassDoc superClass = classDoc.superclass();
+        while (superClass != null) {
+            if (superClass != null && superClass.name().equals("Resource")) {
+                isResource = true;
+                break;
+            }
+
+            superClass = superClass.superclass();
+        }
+
+        return isResource;
     }
 
     private String resourceName() {
