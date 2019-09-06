@@ -161,7 +161,7 @@ public class ResourceDocGenerator {
         }
 
         for (MethodDoc methodDoc : classDoc.methods()) {
-            if (!ObjectUtils.isBlank(methodDoc.commentText())) {
+            if (methodDoc.commentText() != null && methodDoc.commentText().length() > 0) {
                 String attributeName = methodDoc.name();
                 attributeName = CaseFormat.UPPER_CAMEL.to(CaseFormat.LOWER_HYPHEN, attributeName).replaceFirst("get-", "");
 
@@ -215,7 +215,7 @@ public class ResourceDocGenerator {
         }
 
         for (MethodDoc methodDoc : classDoc.methods()) {
-            if (!ObjectUtils.isBlank(methodDoc.commentText())) {
+            if (methodDoc.commentText() != null && methodDoc.commentText().length() > 0) {
                 boolean isOutput = false;
 
                 for (AnnotationDesc annotationDesc : methodDoc.annotations()) {
@@ -241,7 +241,7 @@ public class ResourceDocGenerator {
         sb.append(firstSentence(methodDoc.commentText()));
 
         String rest = comment(methodDoc.commentText(), indent);
-        if (!ObjectUtils.isBlank(rest)) {
+        if (rest != null && rest.length() > 0) {
             sb.append(rest);
         }
 
