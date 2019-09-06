@@ -30,3 +30,7 @@ Please follow these rules:
 
 - Fields should be ordered as such: required fields first, then optional fields, finally
   read-only fields.
+
+## License
+
+[Apache License 2.0](https://github.com/perfectsense/gyro-doclet/blob/master/LICENSE) 
