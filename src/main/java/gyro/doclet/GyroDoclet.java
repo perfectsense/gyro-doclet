@@ -91,10 +91,51 @@ public class GyroDoclet extends Doclet {
                 for (String resource : resources.keySet()) {
                     String rst = resources.get(resource);
 
-                    try (FileWriter writer = new FileWriter(outputDirectory + File.separator + groupDir + File.separator + resource + ".rst")) {
-                        writer.write(rst);
-                    } catch (IOException ioe) {
-                        ioe.printStackTrace();
+                    if(!resource.endsWith("-finder")) {
+
+                        String finderResource = resource + "-finder";
+                        if (resources.containsKey(finderResource)) {
+                            String finderRst = resources.get(finderResource);
+
+                            StringBuilder sb  = new StringBuilder();
+                            rst = sb.append(".. _Resource_Query_Link_").append(group).append("_").append(resource).append("_").append("Resource:")
+                                .append("\n\n")
+                                .append(".. rst-class:: .query-resource-link")
+                                .append("\n")
+                                .append(":ref:`Query <Resource_Query_Link_").append(group).append("_").append(resource).append("_").append("Query>`")
+                                .append("\n\n")
+                                .append(rst).toString();
+
+                            sb = new StringBuilder();
+                            finderRst = sb.append(".. _Resource_Query_Link_").append(group).append("_").append(resource).append("_").append("Query:")
+                                .append("\n\n")
+                                .append(".. rst-class:: .query-resource-link")
+                                .append("\n")
+                                .append(":ref:`Back to resource <Resource_Query_Link_").append(group).append("_").append(resource).append("_").append("Resource>`")
+                                .append("\n\n")
+                                .append(finderRst).toString();
+
+                            //Resource
+                            try (FileWriter writer = new FileWriter(outputDirectory + File.separator + groupDir + File.separator + resource + ".rst")) {
+                                writer.write(rst);
+                            } catch (IOException ioe) {
+                                ioe.printStackTrace();
+                            }
+
+                            //Finder
+                            try (FileWriter writer = new FileWriter(outputDirectory + File.separator + groupDir + File.separator + finderResource + ".rst")) {
+                                writer.write(finderRst);
+                            } catch (IOException ioe) {
+                                ioe.printStackTrace();
+                            }
+
+                        } else { //No finder
+                            try (FileWriter writer = new FileWriter(outputDirectory + File.separator + groupDir + File.separator + resource + ".rst")) {
+                                writer.write(rst);
+                            } catch (IOException ioe) {
+                                ioe.printStackTrace();
+                            }
+                        }
                     }
                 }
 
@@ -167,7 +208,7 @@ public class GyroDoclet extends Doclet {
         Collections.sort(keys);
 
         for (String resource : keys) {
-            if (resource != null) {
+            if (resource != null && !resource.endsWith("-finder")) {
                 sb.append("    ").append(resource);
                 sb.append("\n");
             }
