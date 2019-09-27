@@ -53,13 +53,14 @@ public class GyroDoclet extends Doclet {
         String providerPackage = "";
 
         for (ClassDoc doc : root.classes()) {
-            if (doc.isAbstract() || !ResourceDocGenerator.isResource(doc)) {
+            if (doc.isAbstract() || (!ResourceDocGenerator.isResource(doc) && !ResourceDocGenerator.isFinder(doc))) {
                 continue;
             }
 
-            ResourceDocGenerator generator = new ResourceDocGenerator(root, doc);
+            ResourceDocGenerator generator = new ResourceDocGenerator(root, doc, ResourceDocGenerator.isFinder(doc));
 
             Map<String, String> groupDocs = docs.computeIfAbsent(generator.getGroupName(), m -> new HashMap());
+
             groupDocs.put(generator.getName(), generator.generate());
 
             if (providerPackage.equals("")) {
