@@ -26,6 +26,7 @@ version = "0.99.0-SNAPSHOT"
 defaultTasks 'shadowJar'
 
 if (System.getenv("TRAVIS_BRANCH") == null) {
+    defaultTasks 'build', 'publishToMavenLocal'
     check.dependsOn 'publishToMavenLocal'
     publishToMavenLocal.dependsOn 'shadowJar'
 } else {
