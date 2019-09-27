@@ -73,6 +73,8 @@ public class ResourceDocGenerator {
                     namespace = (String) annotationDesc.elementValues()[0].value().value();
                 }
             }
+        } else if (providerPackage.startsWith("gyro.")) {
+            namespace = providerPackage.split("\\.")[1];
         }
 
         if (doc.superclass() != null && doc.superclass().name().equals("Diffable")) {
