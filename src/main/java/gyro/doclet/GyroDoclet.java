@@ -73,7 +73,7 @@ public class GyroDoclet extends Doclet {
         ------------
 
         .. toctree::
-            :hidden:
+            :maxdepth: 1
 
            autoscaling-groups/index
            ec2/index
@@ -153,10 +153,13 @@ public class GyroDoclet extends Doclet {
         // Output provider index
         StringBuilder providerIndex = new StringBuilder();
         PackageDoc rootPackageDoc = root.packageNamed(providerPackage);
-        providerIndex.append(rootPackageDoc.commentText());
+
+        providerIndex.append(trimLeadingSpace(rootPackageDoc.commentText()).replace("{@literal @}", "@"));
+        providerIndex.append("\n\nResources\n");
+        providerIndex.append("+++++++++\n");
         providerIndex.append("\n\n");
         providerIndex.append(".. toctree::\n");
-        providerIndex.append("    :hidden:\n\n");
+        providerIndex.append("    :maxdepth: 1\n\n");
 
         Collections.sort(groupDirs);
 
@@ -201,7 +204,7 @@ public class GyroDoclet extends Doclet {
         sb.append("\n\n");
         sb.append(".. toctree::");
         sb.append("\n");
-        sb.append("    :hidden:");
+        sb.append("    :maxdepth: 1");
         sb.append("\n\n");
 
         List<String> keys = new ArrayList<>(resources.keySet());
@@ -215,6 +218,21 @@ public class GyroDoclet extends Doclet {
         }
 
         return sb.toString();
+    }
+
+    private static String trimLeadingSpace(String comment) {
+        StringBuilder sb = new StringBuilder();
+
+        String[] parts = comment.split("\n");
+        if (parts.length > 1) {
+            for (int i = 0; i < parts.length; i++) {
+                sb.append(parts[i].replaceFirst(" ", ""));
+                sb.append("\n");
+            }
+        }
+
+        return sb.toString();
+
     }
 
 }
