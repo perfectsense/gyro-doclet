@@ -24,9 +24,6 @@ import com.sun.javadoc.PackageDoc;
 import com.sun.javadoc.RootDoc;
 import com.sun.javadoc.Tag;
 
-import java.util.ArrayList;
-import java.util.List;
-
 public class ResourceDocGenerator {
 
     private RootDoc root;
@@ -35,10 +32,9 @@ public class ResourceDocGenerator {
     private String name;
     private String groupName;
     private String providerPackage;
-    private List<String> subresources = new ArrayList<>();
     private boolean isSubresource = false;
 
-    public ResourceDocGenerator(RootDoc root, ClassDoc doc) {
+    public ResourceDocGenerator(RootDoc root, ClassDoc doc, boolean isFinder) {
         this.root = root;
         this.doc = doc;
 
@@ -64,14 +60,21 @@ public class ResourceDocGenerator {
             name = CaseFormat.UPPER_CAMEL.to(CaseFormat.LOWER_HYPHEN, doc.name().replace("Resource", ""));
         }
 
+        if (isFinder) {
+            name = name + "-finder";
+        }
+
         providerPackage = packageDoc.name().substring(0, packageDoc.name().lastIndexOf('.'));
         PackageDoc rootPackageDoc = root.packageNamed(providerPackage);
+
         if (rootPackageDoc != null) {
             for (AnnotationDesc annotationDesc : rootPackageDoc.annotations()) {
                 if (annotationDesc.annotationType().name().equals("DocNamespace")) {
                     namespace = (String) annotationDesc.elementValues()[0].value().value();
                 }
             }
+        } else if (providerPackage.startsWith("gyro.")) {
+            namespace = providerPackage.split("\\.")[1];
         }
 
         if (doc.superclass() != null && doc.superclass().name().equals("Diffable")) {
@@ -155,8 +158,23 @@ public class ResourceDocGenerator {
         return isResource;
     }
 
+    public static boolean isFinder(ClassDoc classDoc) {
+        boolean isFinder = false;
+        ClassDoc superClass = classDoc.superclass();
+        while (superClass != null) {
+            if (superClass.name().equals("Finder")) {
+                isFinder = true;
+                break;
+            }
+
+            superClass = superClass.superclass();
+        }
+
+        return isFinder;
+    }
+
     private String resourceName() {
-        return String.format("%s::%s", namespace, name);
+        return String.format("%s::%s", namespace, name.replace("-finder",""));
     }
 
     private void generateHeader(StringBuilder sb) {
@@ -172,7 +190,7 @@ public class ResourceDocGenerator {
         boolean hadOutputs = false;
 
         // Output superclass attributes.
-        if (classDoc.superclass() != null && !classDoc.superclass().name().equals("Resource")) {
+        if (classDoc.superclass() != null && (!classDoc.superclass().name().equals("Resource") || !classDoc.superclass().name().equals("Finder"))) {
             hadOutputs = generateAttributes(classDoc.superclass(), sb, indent);
         }
 
@@ -206,7 +224,7 @@ public class ResourceDocGenerator {
                 }
 
                 for (AnnotationDesc annotationDesc : methodDoc.annotations()) {
-                    if (annotationDesc.annotationType().name().equals("ResourceOutput")) {
+                    if (annotationDesc.annotationType().name().equals("Output")) {
                         isOutput = true;
                     }
                 }
@@ -226,7 +244,7 @@ public class ResourceDocGenerator {
 
     private void generateOutputs(ClassDoc classDoc, StringBuilder sb, int indent) {
         // Output superclass attributes.
-        if (classDoc.superclass() != null && !classDoc.superclass().name().equals("Resource")) {
+        if (classDoc.superclass() != null && (!classDoc.superclass().name().equals("Resource") || !classDoc.superclass().name().equals("Finder"))) {
             generateOutputs(classDoc.superclass(), sb, indent);
         }
 
@@ -235,7 +253,7 @@ public class ResourceDocGenerator {
                 boolean isOutput = false;
 
                 for (AnnotationDesc annotationDesc : methodDoc.annotations()) {
-                    if (annotationDesc.annotationType().name().equals("ResourceOutput")) {
+                    if (annotationDesc.annotationType().name().equals("Output")) {
                         isOutput = true;
                     }
                 }

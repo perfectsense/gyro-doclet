@@ -53,13 +53,14 @@ public class GyroDoclet extends Doclet {
         String providerPackage = "";
 
         for (ClassDoc doc : root.classes()) {
-            if (doc.isAbstract() || !ResourceDocGenerator.isResource(doc)) {
+            if (doc.isAbstract() || (!ResourceDocGenerator.isResource(doc) && !ResourceDocGenerator.isFinder(doc))) {
                 continue;
             }
 
-            ResourceDocGenerator generator = new ResourceDocGenerator(root, doc);
+            ResourceDocGenerator generator = new ResourceDocGenerator(root, doc, ResourceDocGenerator.isFinder(doc));
 
             Map<String, String> groupDocs = docs.computeIfAbsent(generator.getGroupName(), m -> new HashMap());
+
             groupDocs.put(generator.getName(), generator.generate());
 
             if (providerPackage.equals("")) {
@@ -72,7 +73,7 @@ public class GyroDoclet extends Doclet {
         ------------
 
         .. toctree::
-            :hidden:
+            :maxdepth: 1
 
            autoscaling-groups/index
            ec2/index
@@ -90,10 +91,51 @@ public class GyroDoclet extends Doclet {
                 for (String resource : resources.keySet()) {
                     String rst = resources.get(resource);
 
-                    try (FileWriter writer = new FileWriter(outputDirectory + File.separator + groupDir + File.separator + resource + ".rst")) {
-                        writer.write(rst);
-                    } catch (IOException ioe) {
-                        ioe.printStackTrace();
+                    if(!resource.endsWith("-finder")) {
+
+                        String finderResource = resource + "-finder";
+                        if (resources.containsKey(finderResource)) {
+                            String finderRst = resources.get(finderResource);
+
+                            StringBuilder sb  = new StringBuilder();
+                            rst = sb.append(".. _Resource_Query_Link_").append(group).append("_").append(resource).append("_").append("Resource:")
+                                .append("\n\n")
+                                .append(".. rst-class:: .query-resource-link")
+                                .append("\n")
+                                .append(":ref:`Query <Resource_Query_Link_").append(group).append("_").append(resource).append("_").append("Query>`")
+                                .append("\n\n")
+                                .append(rst).toString();
+
+                            sb = new StringBuilder();
+                            finderRst = sb.append(".. _Resource_Query_Link_").append(group).append("_").append(resource).append("_").append("Query:")
+                                .append("\n\n")
+                                .append(".. rst-class:: .query-resource-link")
+                                .append("\n")
+                                .append(":ref:`Back to resource <Resource_Query_Link_").append(group).append("_").append(resource).append("_").append("Resource>`")
+                                .append("\n\n")
+                                .append(finderRst).toString();
+
+                            //Resource
+                            try (FileWriter writer = new FileWriter(outputDirectory + File.separator + groupDir + File.separator + resource + ".rst")) {
+                                writer.write(rst);
+                            } catch (IOException ioe) {
+                                ioe.printStackTrace();
+                            }
+
+                            //Finder
+                            try (FileWriter writer = new FileWriter(outputDirectory + File.separator + groupDir + File.separator + finderResource + ".rst")) {
+                                writer.write(finderRst);
+                            } catch (IOException ioe) {
+                                ioe.printStackTrace();
+                            }
+
+                        } else { //No finder
+                            try (FileWriter writer = new FileWriter(outputDirectory + File.separator + groupDir + File.separator + resource + ".rst")) {
+                                writer.write(rst);
+                            } catch (IOException ioe) {
+                                ioe.printStackTrace();
+                            }
+                        }
                     }
                 }
 
@@ -111,10 +153,13 @@ public class GyroDoclet extends Doclet {
         // Output provider index
         StringBuilder providerIndex = new StringBuilder();
         PackageDoc rootPackageDoc = root.packageNamed(providerPackage);
-        providerIndex.append(rootPackageDoc.commentText());
+
+        providerIndex.append(trimLeadingSpace(rootPackageDoc.commentText()).replace("{@literal @}", "@"));
+        providerIndex.append("\n\nResources\n");
+        providerIndex.append("+++++++++\n");
         providerIndex.append("\n\n");
         providerIndex.append(".. toctree::\n");
-        providerIndex.append("    :hidden:\n\n");
+        providerIndex.append("    :maxdepth: 1\n\n");
 
         Collections.sort(groupDirs);
 
@@ -159,20 +204,35 @@ public class GyroDoclet extends Doclet {
         sb.append("\n\n");
         sb.append(".. toctree::");
         sb.append("\n");
-        sb.append("    :hidden:");
+        sb.append("    :maxdepth: 1");
         sb.append("\n\n");
 
         List<String> keys = new ArrayList<>(resources.keySet());
         Collections.sort(keys);
 
         for (String resource : keys) {
-            if (resource != null) {
+            if (resource != null && !resource.endsWith("-finder")) {
                 sb.append("    ").append(resource);
                 sb.append("\n");
             }
         }
 
         return sb.toString();
+    }
+
+    private static String trimLeadingSpace(String comment) {
+        StringBuilder sb = new StringBuilder();
+
+        String[] parts = comment.split("\n");
+        if (parts.length > 1) {
+            for (int i = 0; i < parts.length; i++) {
+                sb.append(parts[i].replaceFirst(" ", ""));
+                sb.append("\n");
+            }
+        }
+
+        return sb.toString();
+
     }
 
 }
