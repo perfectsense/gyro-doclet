@@ -58,6 +58,7 @@ public class ResourceDocGenerator {
 
         if (name == null) {
             name = CaseFormat.UPPER_CAMEL.to(CaseFormat.LOWER_HYPHEN, doc.name().replace("Resource", ""));
+            isSubresource = true;
         }
 
         if (isFinder) {
@@ -73,7 +74,9 @@ public class ResourceDocGenerator {
                     namespace = (String) annotationDesc.elementValues()[0].value().value();
                 }
             }
-        } else if (providerPackage.startsWith("gyro.")) {
+        }
+
+        if (namespace == null && providerPackage.startsWith("gyro.")) {
             namespace = providerPackage.split("\\.")[1];
         }
 
@@ -147,7 +150,7 @@ public class ResourceDocGenerator {
         boolean isResource = false;
         ClassDoc superClass = classDoc.superclass();
         while (superClass != null) {
-            if (superClass != null && superClass.name().equals("Resource")) {
+            if (superClass.name().equals("Resource")) {
                 isResource = true;
                 break;
             }
