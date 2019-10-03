@@ -74,7 +74,9 @@ public class ResourceDocGenerator {
                     namespace = (String) annotationDesc.elementValues()[0].value().value();
                 }
             }
-        } else if (providerPackage.startsWith("gyro.")) {
+        }
+
+        if (namespace == null && providerPackage.startsWith("gyro.")) {
             namespace = providerPackage.split("\\.")[1];
         }
 
