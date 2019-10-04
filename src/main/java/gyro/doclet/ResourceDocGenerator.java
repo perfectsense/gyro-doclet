@@ -100,6 +100,9 @@ public class ResourceDocGenerator {
         sb.append(repeat("-", 10));
         sb.append("\n\n");
 
+        sb.append(".. role:: attribute\n\n");
+        sb.append(".. role:: subresource\n\n");
+
         sb.append(".. list-table::\n");
         sb.append("    :widths: 30 70\n");
         sb.append("    :header-rows: 1\n\n");
@@ -242,7 +245,7 @@ public class ResourceDocGenerator {
                     if (tableFormat) {
                         sb.append(repeat(" ", indent));
                         sb.append("    * - ");
-                        sb.append(attributeName);
+                        sb.append(String.format(":attribute:`%s` :subresource:`subresource`", attributeName));
                         sb.append("\n");
                         sb.append(repeat(" ", indent + 6));
                         sb.append("- ");
@@ -306,7 +309,7 @@ public class ResourceDocGenerator {
                             if (tableFormat) {
                                 sb.append(repeat(" ", indent));
                                 sb.append("    * - ");
-                                sb.append(attributeName);
+                                sb.append(String.format(":attribute:`%s` :subresource:`subresource`", attributeName));
                                 sb.append("\n");
                                 sb.append(repeat(" ", indent + 6));
                                 sb.append("- ");
