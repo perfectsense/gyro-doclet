@@ -350,21 +350,22 @@ public class ResourceDocGenerator {
     private void writeAttribute(StringBuilder sb, MethodDoc methodDoc, int indent, boolean tableFormat) {
         String attributeName = methodDoc.name();
         attributeName = CaseFormat.UPPER_CAMEL.to(CaseFormat.LOWER_HYPHEN, attributeName).replaceFirst("get-", "");
+        String commentText = methodDoc.commentText();
 
         if (tableFormat) {
             sb.append(repeat(" ", indent + 4));
             sb.append(String.format("* - %s\n", attributeName));
             sb.append(repeat(" ", indent + 6));
             sb.append("- ");
-            sb.append(firstSentence(methodDoc.commentText()));
+            sb.append(firstSentence(commentText));
         } else {
             sb.append(repeat(" ", indent));
             sb.append(String.format("%s\n", attributeName));
             sb.append(repeat(" ", indent + 4));
-            sb.append(firstSentence(methodDoc.commentText()));
+            sb.append(firstSentence(commentText));
         }
 
-        String rest = comment(methodDoc.commentText(), indent);
+        String rest = comment(commentText, indent + (tableFormat ? 8 : 4));
         if (rest != null && rest.length() > 0) {
             sb.append(rest);
         }
