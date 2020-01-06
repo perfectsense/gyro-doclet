@@ -384,9 +384,9 @@ public class ResourceDocGenerator {
         if (parts.length > 1) {
             sb.append("\n");
             for (int i = 1; i < parts.length; i++) {
-                sb.append(repeat(" ", indent));
-                sb.append(parts[i]);
                 sb.append("\n");
+                sb.append(repeat(" ", indent));
+                sb.append(parts[i].replaceAll("^\\s+", ""));
             }
         }
 
