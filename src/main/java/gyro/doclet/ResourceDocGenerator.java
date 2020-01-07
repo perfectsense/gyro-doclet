@@ -39,22 +39,8 @@ public class ResourceDocGenerator {
         this.doc = doc;
 
         PackageDoc packageDoc = doc.containingPackage();
-        for (AnnotationDesc annotationDesc : packageDoc.annotations()) {
-            if (annotationDesc.annotationType().name().equals("DocGroup")) {
-                groupName = (String) annotationDesc.elementValues()[0].value().value();
-            }
-        }
-
-        for (AnnotationDesc annotationDesc : doc.annotations()) {
-            if (annotationDesc.annotationType().name().equals("Type")) {
-                for (AnnotationDesc.ElementValuePair pair : annotationDesc.elementValues()) {
-                    if (pair.element().name().equals("value")) {
-                        name = (String) pair.value().value();
-                        break;
-                    }
-                }
-            }
-        }
+        groupName = getDocGroupName(packageDoc);
+        name = getResourceName(doc);
 
         if (name == null) {
             name = CaseFormat.UPPER_CAMEL.to(CaseFormat.LOWER_HYPHEN, doc.name().replace("Resource", ""));
@@ -377,6 +363,27 @@ public class ResourceDocGenerator {
         return commentText.split("\n")[0];
     }
 
+    private String getDocGroupName(PackageDoc packageDoc) {
+        for (AnnotationDesc annotationDesc : packageDoc.annotations()) {
+            if (annotationDesc.annotationType().name().equals("DocGroup")) {
+                return (String) annotationDesc.elementValues()[0].value().value();
+            }
+        }
+        return null;
+    }
+
+    private String getResourceName(ClassDoc doc) {
+        for (AnnotationDesc annotationDesc : doc.annotations()) {
+            if (annotationDesc.annotationType().name().equals("Type")) {
+                for (AnnotationDesc.ElementValuePair pair : annotationDesc.elementValues()) {
+                    if (pair.element().name().equals("value")) {
+                        return (String) pair.value().value();
+                    }
+                }
+            }
+        }
+        return null;
+    }
     private String comment(String commentText, int indent) {
         StringBuilder sb = new StringBuilder();
 
