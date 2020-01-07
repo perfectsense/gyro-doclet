@@ -16,6 +16,8 @@
 
 package gyro.doclet;
 
+import java.util.regex.Pattern;
+
 import com.google.common.base.CaseFormat;
 import com.sun.javadoc.AnnotationDesc;
 import com.sun.javadoc.ClassDoc;
@@ -25,6 +27,9 @@ import com.sun.javadoc.RootDoc;
 import com.sun.javadoc.Tag;
 
 public class ResourceDocGenerator {
+
+    private static final Pattern LEADING_WHITE_SPACE = Pattern.compile("^\\s?");
+    private static final Pattern LEADING_WHITE_SPACES = Pattern.compile("^\\s+");
 
     private RootDoc root;
     private ClassDoc doc;
@@ -128,18 +133,29 @@ public class ResourceDocGenerator {
         return groupName;
     }
 
+    public static String trimLeadingSpace(String s) {
+        if (s == null) {
+            return null;
+        }
+        return LEADING_WHITE_SPACE.matcher(s).replaceAll("");
+    }
+
+    public static String trimLeadingSpaces(String s) {
+        if (s == null) {
+            return null;
+        }
+        return LEADING_WHITE_SPACES.matcher(s).replaceAll("");
+    }
+
     public static String trim(String s) {
         StringBuilder sb = new StringBuilder();
 
-        for (String line : s.split("\n")) {
-            if (line.startsWith(" ")) {
-                sb.append(line.substring(1));
-            } else {
-                sb.append(line);
+        if (s != null) {
+            for (String line : s.split("\n")) {
+                sb.append(trimLeadingSpace(line));
+                sb.append("\n");
             }
-            sb.append("\n");
         }
-
         return sb.toString();
     }
 
