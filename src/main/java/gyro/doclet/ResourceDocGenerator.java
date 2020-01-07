@@ -214,8 +214,11 @@ public class ResourceDocGenerator {
         boolean hadOutputs = false;
 
         // Output superclass attributes.
-        if (classDoc.superclass() != null && (!classDoc.superclass().name().equals("Resource") || !classDoc.superclass().name().equals("Finder"))) {
-            hadOutputs = writeAttributes(classDoc.superclass(), sb, indent, includeOutput, tableFormat);
+        if (classDoc.superclass() != null
+            && !classDoc.superclass().qualifiedName().equals("gyro.core.resource.Resource")
+            && !classDoc.superclass().qualifiedName().equals("gyro.core.resource.Diffable")
+            && !classDoc.superclass().qualifiedName().equals("gyro.core.finder.Finder")) {
+            hadOutputs = writeAttributes(classDoc.superclass(), sb, indent, outputMode, tableFormat);
         }
 
         // Read each method that contains a comment.
