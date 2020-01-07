@@ -32,6 +32,12 @@ import com.sun.javadoc.RootDoc;
 
 public class GyroDoclet extends Doclet {
 
+    private static final String LINK_PATTERN = "Resource_Query_Link_%s_%s_";
+
+    protected static final String RESOURCE_LINK_PATTERN = LINK_PATTERN + "Resource";
+
+    protected static final String QUERY_LINK_PATTERN = LINK_PATTERN + "Query";
+
     public static boolean start(RootDoc root) {
         // Generate rst file for each resource.
         // Generate index for each group (i.e. java package) of resources.
@@ -96,22 +102,24 @@ public class GyroDoclet extends Doclet {
                         String finderResource = resource + "-finder";
                         if (resources.containsKey(finderResource)) {
                             String finderRst = resources.get(finderResource);
+                            String resourceLink = String.format(RESOURCE_LINK_PATTERN, group, resource);
+                            String queryLink = String.format(QUERY_LINK_PATTERN, group, resource);
 
                             StringBuilder sb  = new StringBuilder();
-                            rst = sb.append(".. _Resource_Query_Link_").append(group).append("_").append(resource).append("_").append("Resource:")
+                            rst = sb.append(".. _").append(resourceLink).append(":")
                                 .append("\n\n")
                                 .append(".. rst-class:: .query-resource-link")
                                 .append("\n")
-                                .append(":ref:`Query <Resource_Query_Link_").append(group).append("_").append(resource).append("_").append("Query>`")
+                                .append(":ref:`Query <").append(queryLink).append(">`")
                                 .append("\n\n")
                                 .append(rst).toString();
 
                             sb = new StringBuilder();
-                            finderRst = sb.append(".. _Resource_Query_Link_").append(group).append("_").append(resource).append("_").append("Query:")
+                            finderRst = sb.append(".. _").append(queryLink).append(":")
                                 .append("\n\n")
                                 .append(".. rst-class:: .query-resource-link")
                                 .append("\n")
-                                .append(":ref:`Back to resource <Resource_Query_Link_").append(group).append("_").append(resource).append("_").append("Resource>`")
+                                .append(":ref:`Back to resource <").append(resourceLink).append(">`")
                                 .append("\n\n")
                                 .append(finderRst).toString();
 
