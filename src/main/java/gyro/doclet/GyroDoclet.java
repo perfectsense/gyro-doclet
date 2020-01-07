@@ -16,11 +16,6 @@
 
 package gyro.doclet;
 
-import com.sun.javadoc.ClassDoc;
-import com.sun.javadoc.Doclet;
-import com.sun.javadoc.PackageDoc;
-import com.sun.javadoc.RootDoc;
-
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
@@ -29,6 +24,11 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+
+import com.sun.javadoc.ClassDoc;
+import com.sun.javadoc.Doclet;
+import com.sun.javadoc.PackageDoc;
+import com.sun.javadoc.RootDoc;
 
 public class GyroDoclet extends Doclet {
 
