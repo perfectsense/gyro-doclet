@@ -16,6 +16,9 @@
 
 package gyro.doclet;
 
+import java.util.Optional;
+import java.util.regex.Pattern;
+
 import com.google.common.base.CaseFormat;
 import com.sun.javadoc.AnnotationDesc;
 import com.sun.javadoc.ClassDoc;
@@ -25,6 +28,9 @@ import com.sun.javadoc.RootDoc;
 import com.sun.javadoc.Tag;
 
 public class ResourceDocGenerator {
+
+    private static final Pattern LEADING_WHITE_SPACE = Pattern.compile("^\\s?");
+    private static final Pattern LEADING_WHITE_SPACES = Pattern.compile("^\\s+");
 
     private RootDoc root;
     private ClassDoc doc;
@@ -39,22 +45,8 @@ public class ResourceDocGenerator {
         this.doc = doc;
 
         PackageDoc packageDoc = doc.containingPackage();
-        for (AnnotationDesc annotationDesc : packageDoc.annotations()) {
-            if (annotationDesc.annotationType().name().equals("DocGroup")) {
-                groupName = (String) annotationDesc.elementValues()[0].value().value();
-            }
-        }
-
-        for (AnnotationDesc annotationDesc : doc.annotations()) {
-            if (annotationDesc.annotationType().name().equals("Type")) {
-                for (AnnotationDesc.ElementValuePair pair : annotationDesc.elementValues()) {
-                    if (pair.element().name().equals("value")) {
-                        name = (String) pair.value().value();
-                        break;
-                    }
-                }
-            }
-        }
+        groupName = getDocGroupName(packageDoc);
+        name = getResourceType(doc);
 
         if (name == null) {
             name = CaseFormat.UPPER_CAMEL.to(CaseFormat.LOWER_HYPHEN, doc.name().replace("Resource", ""));
@@ -101,6 +93,7 @@ public class ResourceDocGenerator {
         sb.append("\n\n");
 
         sb.append(".. role:: attribute\n\n");
+        sb.append(".. role:: resource\n\n");
         sb.append(".. role:: subresource\n\n");
 
         sb.append(".. list-table::\n");
@@ -142,18 +135,29 @@ public class ResourceDocGenerator {
         return groupName;
     }
 
+    public static String trimLeadingSpace(String s) {
+        if (s == null) {
+            return null;
+        }
+        return LEADING_WHITE_SPACE.matcher(s).replaceAll("");
+    }
+
+    public static String trimLeadingSpaces(String s) {
+        if (s == null) {
+            return null;
+        }
+        return LEADING_WHITE_SPACES.matcher(s).replaceAll("");
+    }
+
     public static String trim(String s) {
         StringBuilder sb = new StringBuilder();
 
-        for (String line : s.split("\n")) {
-            if (line.startsWith(" ")) {
-                sb.append(line.substring(1));
-            } else {
-                sb.append(line);
+        if (s != null) {
+            for (String line : s.split("\n")) {
+                sb.append(trimLeadingSpace(line));
+                sb.append("\n");
             }
-            sb.append("\n");
         }
-
         return sb.toString();
     }
 
@@ -192,39 +196,50 @@ public class ResourceDocGenerator {
     }
 
     private String resourceName() {
+        return resourceName(name);
+    }
+
+    private String resourceName(String name) {
         return String.format("%s::%s", namespace, name.replace("-finder",""));
     }
 
     private void generateHeader(StringBuilder sb) {
-        sb.append(resourceName());
+        String resourceName = resourceName();
+        sb.append(resourceName);
         sb.append("\n");
-        sb.append(repeat("=", resourceName().length()));
+        sb.append(repeat("=", resourceName.length()));
         sb.append("\n\n");
         sb.append(trim(doc.commentText()));
         sb.append("\n\n");
     }
 
     private boolean writeAttributes(ClassDoc classDoc, StringBuilder sb, int indent, boolean includeOutput) {
-        return writeAttributes(classDoc, sb, indent, includeOutput, true);
+        return writeAttributes(classDoc, sb, indent, includeOutput ? OutputMode.INCLUDE_OUTPUT : OutputMode.EXCLUDE_OUTPUT, true);
     }
 
-    private boolean writeAttributes(ClassDoc classDoc, StringBuilder sb, int indent, boolean includeOutput, boolean tableFormat) {
+    private boolean writeAttributes(ClassDoc classDoc, StringBuilder sb, int indent, OutputMode outputMode, boolean tableFormat) {
         boolean hadOutputs = false;
 
         // Output superclass attributes.
-        if (classDoc.superclass() != null && (!classDoc.superclass().name().equals("Resource") || !classDoc.superclass().name().equals("Finder"))) {
-            hadOutputs = writeAttributes(classDoc.superclass(), sb, indent, includeOutput, tableFormat);
+        if (classDoc.superclass() != null
+            && !classDoc.superclass().qualifiedName().equals("gyro.core.resource.Resource")
+            && !classDoc.superclass().qualifiedName().equals("gyro.core.resource.Diffable")
+            && !classDoc.superclass().qualifiedName().equals("gyro.core.finder.Finder")) {
+            hadOutputs = writeAttributes(classDoc.superclass(), sb, indent, outputMode, tableFormat);
         }
 
         // Read each method that contains a comment.
         for (MethodDoc methodDoc : classDoc.methods()) {
-            if (methodDoc.commentText() != null && methodDoc.commentText().length() > 0) {
+            String commentText = methodDoc.commentText();
+
+            if (commentText != null && commentText.length() > 0) {
                 String attributeName = methodDoc.name();
                 attributeName = CaseFormat.UPPER_CAMEL.to(CaseFormat.LOWER_HYPHEN, attributeName).replaceFirst("get-", "");
 
                 String attributeSubresourceClass = "";
-                boolean attributeIsSubresource = false;
                 boolean attributeIsOutput = false;
+                ResourceType attributeResourceType = null;
+                StringBuilder resourceLinkBuilder = new StringBuilder();
 
                 for (AnnotationDesc annotationDesc : methodDoc.annotations()) {
                     if (annotationDesc.annotationType().name().equals("Output")) {
@@ -235,39 +250,40 @@ public class ResourceDocGenerator {
                 for (Tag tag : methodDoc.tags()) {
                     if (tag.name().equals("@subresource")) {
                         attributeSubresourceClass = tag.text();
-                        attributeIsSubresource = true;
+                        attributeResourceType = ResourceType.SUBRESOURCE;
                     } else if (tag.name().equals("@output")) {
                         attributeIsOutput = true;
+                    } else if (tag.name().equals("@resource")) {
+                        // TODO: cache
+                        ClassDoc resourceDoc = root.classNamed(tag.text());
+                        String groupName = getDocGroupName(resourceDoc.containingPackage());
+                        String resourceType = getResourceType(resourceDoc);
+
+                        if (resourceType == null) {
+                            System.err.println("Not a resource type!: " + tag.text());
+                        } else {
+                            resourceLinkBuilder.append(":ref:`")
+                                .append(resourceName(resourceType))
+                                .append("<")
+                                .append(String.format(GyroDoclet.RESOURCE_LINK_PATTERN, groupName, resourceType))
+                                .append(">`");
+                            attributeResourceType = ResourceType.RESOURCE;
+                        }
                     }
                 }
 
-                if (attributeIsSubresource && (includeOutput || !attributeIsOutput)) {
-                    if (tableFormat) {
-                        sb.append(repeat(" ", indent));
-                        sb.append("    * - ");
-                        sb.append(String.format(":attribute:`%s` :subresource:`subresource`", attributeName));
-                        sb.append("\n");
-                        sb.append(repeat(" ", indent + 6));
-                        sb.append("- ");
-                        sb.append(firstSentence(methodDoc.commentText()));
-                        sb.append("\n\n");
-                    } else {
-                        sb.append(repeat(" ", indent));
-                        sb.append(".. rst-class:: subresource\n");
-                        sb.append(repeat(" ", indent));
-                        sb.append(attributeName);
-                        sb.append("\n");
-                        sb.append(repeat(" ", indent + 4));
-                        sb.append(firstSentence(methodDoc.commentText()));
-                        sb.append("\n\n");
-                    }
+                if ((outputMode == OutputMode.INCLUDE_OUTPUT)
+                    || (outputMode == OutputMode.EXCLUDE_OUTPUT && !attributeIsOutput)
+                    || (outputMode == OutputMode.OUTPUT_ONLY && attributeIsOutput)) {
+                    writeAttribute(sb, attributeName, attributeResourceType, resourceLinkBuilder, commentText, indent, tableFormat);
 
-                    ClassDoc subresourceDoc = root.classNamed(attributeSubresourceClass);
-                    if (subresourceDoc != null) {
-                        writeAttributes(subresourceDoc, sb, indent + 8, includeOutput, false);
+                    if (attributeResourceType == ResourceType.SUBRESOURCE) {
+                        ClassDoc subresourceDoc = root.classNamed(attributeSubresourceClass);
+
+                        if (subresourceDoc != null) {
+                            writeAttributes(subresourceDoc, sb, indent + 8, outputMode, false);
+                        }
                     }
-                } else if (includeOutput || !attributeIsOutput) {
-                    writeAttribute(sb, methodDoc, indent, tableFormat);
                 }
 
                 if (attributeIsOutput) {
@@ -279,98 +295,62 @@ public class ResourceDocGenerator {
         return hadOutputs;
     }
 
-    private void generateOutputs(ClassDoc classDoc, StringBuilder sb, int indent) {
-        generateOutputs(classDoc, sb, indent, true);
-    }
-
-    private void generateOutputs(ClassDoc classDoc, StringBuilder sb, int indent, boolean tableFormat) {
-        // Output superclass attributes.
-        if (classDoc.superclass() != null && (!classDoc.superclass().name().equals("Resource") || !classDoc.superclass().name().equals("Finder"))) {
-            generateOutputs(classDoc.superclass(), sb, indent, tableFormat);
-        }
-
-        for (MethodDoc methodDoc : classDoc.methods()) {
-            if (methodDoc.commentText() != null && methodDoc.commentText().length() > 0) {
-                String attributeName = methodDoc.name();
-                attributeName = CaseFormat.UPPER_CAMEL.to(CaseFormat.LOWER_HYPHEN, attributeName).replaceFirst("get-", "");
-
-                boolean isSubresource = false;
-                boolean isOutput = false;
-
-                for (AnnotationDesc annotationDesc : methodDoc.annotations()) {
-                    if (annotationDesc.annotationType().name().equals("Output")) {
-                        isOutput = true;
-                    }
-                }
-
-                if (isOutput) {
-                    for (Tag tag : methodDoc.tags()) {
-                        if (tag.name().equals("@subresource")) {
-                            if (tableFormat) {
-                                sb.append(repeat(" ", indent));
-                                sb.append("    * - ");
-                                sb.append(String.format(":attribute:`%s` :subresource:`subresource`", attributeName));
-                                sb.append("\n");
-                                sb.append(repeat(" ", indent + 6));
-                                sb.append("- ");
-                                sb.append(firstSentence(methodDoc.commentText()));
-                                sb.append("\n\n");
-                            } else {
-                                sb.append(repeat(" ", indent));
-                                sb.append(".. rst-class:: subresource\n");
-                                sb.append(repeat(" ", indent));
-                                sb.append(attributeName);
-                                sb.append("\n");
-                                sb.append(repeat(" ", indent + 4));
-                                sb.append(firstSentence(methodDoc.commentText()));
-                                sb.append("\n\n");
-                            }
-
-                            ClassDoc subresourceDoc = root.classNamed(tag.text());
-                            if (subresourceDoc != null) {
-                                generateOutputs(subresourceDoc, sb, indent + 8, false);
-                            }
-
-                            isSubresource = true;
-                        }
-                    }
-
-                    if (!isSubresource) {
-                        writeAttribute(sb, methodDoc, indent, tableFormat);
-                    }
-                }
-            }
-        }
-    }
-
-    private void writeAttribute(StringBuilder sb, MethodDoc methodDoc, int indent) {
-        writeAttribute(sb, methodDoc, indent, true);
-    }
-
-    private void writeAttribute(StringBuilder sb, MethodDoc methodDoc, int indent, boolean tableFormat) {
-        String attributeName = methodDoc.name();
-        attributeName = CaseFormat.UPPER_CAMEL.to(CaseFormat.LOWER_HYPHEN, attributeName).replaceFirst("get-", "");
-        String commentText = methodDoc.commentText();
+    private void writeAttribute(StringBuilder sb, String attributeName, ResourceType resourceType, StringBuilder link, String commentText, int indent, boolean tableFormat) {
+        String resourceTypeName = Optional.ofNullable(resourceType)
+            .map(ResourceType::toString)
+            .orElse(null);
 
         if (tableFormat) {
             sb.append(repeat(" ", indent + 4));
-            sb.append(String.format("* - %s\n", attributeName));
+            sb.append("* - ");
+            sb.append(String.format(":attribute:`%s`", attributeName));
+
+            if (resourceTypeName != null) {
+                sb.append(String.format(" :%s:`%s`", resourceTypeName, resourceTypeName));
+            }
+            sb.append("\n");
             sb.append(repeat(" ", indent + 6));
             sb.append("- ");
-            sb.append(firstSentence(commentText));
+
+            writeLink(sb, link, resourceTypeName, indent + 8);
         } else {
             sb.append(repeat(" ", indent));
-            sb.append(String.format("%s\n", attributeName));
-            sb.append(repeat(" ", indent + 4));
-            sb.append(firstSentence(commentText));
-        }
 
+            if (resourceTypeName != null) {
+                sb.append(String.format(".. rst-class:: %s\n", resourceTypeName));
+                sb.append(repeat(" ", indent));
+            }
+            sb.append(attributeName);
+            sb.append("\n");
+            sb.append(repeat(" ", indent + 4));
+
+            writeLink(sb, link, resourceTypeName, indent + 4);
+        }
+        sb.append(firstSentence(commentText));
         String rest = comment(commentText, indent + (tableFormat ? 8 : 4));
+
         if (rest != null && rest.length() > 0) {
             sb.append(rest);
         }
-
         sb.append("\n\n");
+    }
+
+    private void writeLink(StringBuilder sb, StringBuilder link, String resourceTypeName, int indent) {
+        if (link != null && link.length() > 0) {
+            sb.append(String.format(".. rst-class:: .%s-link", resourceTypeName));
+            sb.append("\n");
+            sb.append(repeat(" ", indent));
+            sb.append(link);
+            sb.append(" ");
+            sb.append(resourceTypeName);
+            sb.append("\n");
+            sb.append("\n");
+            sb.append(repeat(" ", indent));
+        }
+    }
+
+    private void generateOutputs(ClassDoc classDoc, StringBuilder sb, int indent) {
+        writeAttributes(classDoc, sb, indent, OutputMode.OUTPUT_ONLY, true);
     }
 
     private String firstSentence(String commentText) {
@@ -386,11 +366,48 @@ public class ResourceDocGenerator {
             for (int i = 1; i < parts.length; i++) {
                 sb.append("\n");
                 sb.append(repeat(" ", indent));
-                sb.append(parts[i].replaceAll("^\\s+", ""));
+                sb.append(trimLeadingSpaces(parts[i]));
             }
         }
 
         return sb.toString();
     }
 
+    private String getDocGroupName(PackageDoc packageDoc) {
+        for (AnnotationDesc annotationDesc : packageDoc.annotations()) {
+            if (annotationDesc.annotationType().name().equals("DocGroup")) {
+                return (String) annotationDesc.elementValues()[0].value().value();
+            }
+        }
+        return null;
+    }
+
+    private String getResourceType(ClassDoc doc) {
+        for (AnnotationDesc annotationDesc : doc.annotations()) {
+            if (annotationDesc.annotationType().name().equals("Type")) {
+                for (AnnotationDesc.ElementValuePair pair : annotationDesc.elementValues()) {
+                    if (pair.element().name().equals("value")) {
+                        return (String) pair.value().value();
+                    }
+                }
+            }
+        }
+        return null;
+    }
+
+    private enum OutputMode {
+        OUTPUT_ONLY,
+        INCLUDE_OUTPUT,
+        EXCLUDE_OUTPUT;
+    }
+
+    private enum ResourceType {
+        RESOURCE,
+        SUBRESOURCE;
+
+        @Override
+        public String toString() {
+            return name().toLowerCase();
+        }
+    }
 }
