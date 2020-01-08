@@ -255,15 +255,20 @@ public class ResourceDocGenerator {
                         attributeIsOutput = true;
                     } else if (tag.name().equals("@resource")) {
                         // TODO: cache
-                        attributeResourceType = ResourceType.RESOURCE;
                         ClassDoc resourceDoc = root.classNamed(tag.text());
                         String groupName = getDocGroupName(resourceDoc.containingPackage());
                         String resourceType = getResourceType(resourceDoc);
-                        resourceLinkBuilder.append(":ref:`")
-                            .append(resourceName(resourceType))
-                            .append("<")
-                            .append(String.format(GyroDoclet.RESOURCE_LINK_PATTERN, groupName, resourceType))
-                            .append(">`");
+
+                        if (resourceType == null) {
+                            System.err.println("Not a resource type!: " + tag.text());
+                        } else {
+                            resourceLinkBuilder.append(":ref:`")
+                                .append(resourceName(resourceType))
+                                .append("<")
+                                .append(String.format(GyroDoclet.RESOURCE_LINK_PATTERN, groupName, resourceType))
+                                .append(">`");
+                            attributeResourceType = ResourceType.RESOURCE;
+                        }
                     }
                 }
 
