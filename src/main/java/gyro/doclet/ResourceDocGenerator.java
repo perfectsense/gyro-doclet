@@ -196,6 +196,10 @@ public class ResourceDocGenerator {
     }
 
     private String resourceName() {
+        return resourceName(name);
+    }
+
+    private String resourceName(String name) {
         return String.format("%s::%s", namespace, name.replace("-finder",""));
     }
 
@@ -255,7 +259,7 @@ public class ResourceDocGenerator {
                         String groupName = getDocGroupName(resourceDoc.containingPackage());
                         String resourceType = getResourceType(resourceDoc);
                         resourceLinkBuilder.append(":ref:`")
-                            .append(resourceType)
+                            .append(resourceName(resourceType))
                             .append("<")
                             .append(String.format(GyroDoclet.RESOURCE_LINK_PATTERN, groupName, resourceType))
                             .append(">`");
