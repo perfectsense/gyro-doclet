@@ -204,9 +204,10 @@ public class ResourceDocGenerator {
     }
 
     private void generateHeader(StringBuilder sb) {
-        sb.append(resourceName());
+        String resourceName = resourceName();
+        sb.append(resourceName);
         sb.append("\n");
-        sb.append(repeat("=", resourceName().length()));
+        sb.append(repeat("=", resourceName.length()));
         sb.append("\n\n");
         sb.append(trim(doc.commentText()));
         sb.append("\n\n");
