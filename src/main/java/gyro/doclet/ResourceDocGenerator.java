@@ -46,7 +46,7 @@ public class ResourceDocGenerator {
 
         PackageDoc packageDoc = doc.containingPackage();
         groupName = getDocGroupName(packageDoc);
-        name = getResourceName(doc);
+        name = getResourceType(doc);
 
         if (name == null) {
             name = CaseFormat.UPPER_CAMEL.to(CaseFormat.LOWER_HYPHEN, doc.name().replace("Resource", ""));
@@ -253,11 +253,11 @@ public class ResourceDocGenerator {
                         attributeResourceType = ResourceType.RESOURCE;
                         ClassDoc resourceDoc = root.classNamed(tag.text());
                         String groupName = getDocGroupName(resourceDoc.containingPackage());
-                        String resourceName = getResourceName(resourceDoc);
+                        String resourceType = getResourceType(resourceDoc);
                         resourceLinkBuilder.append(":ref:`")
-                            .append(resourceName)
+                            .append(resourceType)
                             .append("<")
-                            .append(String.format(GyroDoclet.RESOURCE_LINK_PATTERN, groupName, resourceName))
+                            .append(String.format(GyroDoclet.RESOURCE_LINK_PATTERN, groupName, resourceType))
                             .append(">`");
                     }
                 }
@@ -372,7 +372,7 @@ public class ResourceDocGenerator {
         return null;
     }
 
-    private String getResourceName(ClassDoc doc) {
+    private String getResourceType(ClassDoc doc) {
         for (AnnotationDesc annotationDesc : doc.annotations()) {
             if (annotationDesc.annotationType().name().equals("Type")) {
                 for (AnnotationDesc.ElementValuePair pair : annotationDesc.elementValues()) {
