@@ -319,7 +319,7 @@ public class ResourceDocGenerator {
             sb.append(repeat(" ", indent));
 
             if (genericTypeName != null || resourceType != null) {
-                sb.append(".. rst-class:: decorator\n");
+                sb.append(".. rst-class:: label-container\n");
                 sb.append(repeat(" ", indent));
             }
             writeFieldName(sb, attributeName, genericTypeName, resourceTypeName);
