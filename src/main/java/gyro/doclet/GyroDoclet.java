@@ -112,7 +112,7 @@ public class GyroDoclet extends Doclet {
                                 .append("\n\n")
                                 .append(".. rst-class:: .query-resource-link")
                                 .append("\n")
-                                .append(":ref:`Query <").append(queryLink).append(">`")
+                                .append(":doc:`Query <").append(resource).append(FINDER_SUFFIX).append(">`")
                                 .append("\n\n")
                                 .append(rst).toString();
 
@@ -121,7 +121,7 @@ public class GyroDoclet extends Doclet {
                                 .append("\n\n")
                                 .append(".. rst-class:: .query-resource-link")
                                 .append("\n")
-                                .append(":ref:`Back to resource <").append(resourceLink).append(">`")
+                                .append(":doc:`Back to resource <").append(resource).append(">`")
                                 .append("\n\n")
                                 .append(finderRst).toString();
 
