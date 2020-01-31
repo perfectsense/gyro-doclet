@@ -57,7 +57,7 @@ public class ResourceDocGenerator {
         }
 
         if (isFinder) {
-            name = name + "-finder";
+            name = name + GyroDoclet.FINDER_SUFFIX;
         }
 
         providerPackage = packageDoc.name().substring(0, packageDoc.name().lastIndexOf('.'));
@@ -207,7 +207,7 @@ public class ResourceDocGenerator {
     }
 
     private String resourceName(String name) {
-        return String.format("%s::%s", namespace, name.replace("-finder",""));
+        return String.format("%s::%s", namespace, name.replace(GyroDoclet.FINDER_SUFFIX, ""));
     }
 
     private void generateHeader(StringBuilder sb) {
