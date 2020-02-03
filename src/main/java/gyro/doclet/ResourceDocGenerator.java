@@ -26,6 +26,7 @@ import com.sun.javadoc.MethodDoc;
 import com.sun.javadoc.PackageDoc;
 import com.sun.javadoc.RootDoc;
 import com.sun.javadoc.Tag;
+import com.sun.javadoc.Type;
 
 public class ResourceDocGenerator {
 
@@ -93,8 +94,8 @@ public class ResourceDocGenerator {
         sb.append("\n\n");
 
         sb.append(".. role:: attribute\n\n");
-        sb.append(".. role:: resource\n\n");
-        sb.append(".. role:: subresource\n\n");
+        sb.append(".. role:: resource-type\n\n");
+        sb.append(".. role:: collection-type\n\n");
 
         sb.append(".. list-table::\n");
         sb.append("    :widths: 30 70\n");
@@ -275,7 +276,7 @@ public class ResourceDocGenerator {
                 if ((outputMode == OutputMode.INCLUDE_OUTPUT)
                     || (outputMode == OutputMode.EXCLUDE_OUTPUT && !attributeIsOutput)
                     || (outputMode == OutputMode.OUTPUT_ONLY && attributeIsOutput)) {
-                    writeAttribute(sb, attributeName, attributeResourceType, resourceLinkBuilder, commentText, indent, tableFormat);
+                    writeAttribute(methodDoc, sb, attributeName, attributeResourceType, resourceLinkBuilder, commentText, indent, tableFormat);
 
                     if (attributeResourceType == ResourceType.SUBRESOURCE) {
                         ClassDoc subresourceDoc = root.classNamed(attributeSubresourceClass);
@@ -295,20 +296,21 @@ public class ResourceDocGenerator {
         return hadOutputs;
     }
 
-    private void writeAttribute(StringBuilder sb, String attributeName, ResourceType resourceType, StringBuilder link, String commentText, int indent, boolean tableFormat) {
+    private void writeAttribute(MethodDoc methodDoc, StringBuilder sb, String attributeName, ResourceType resourceType, StringBuilder link, String commentText, int indent, boolean tableFormat) {
         String resourceTypeName = Optional.ofNullable(resourceType)
             .map(ResourceType::toString)
+            .orElse(null);
+
+        String genericTypeName = Optional.of(methodDoc.returnType())
+            .filter(e -> e.asParameterizedType() != null)
+            .map(Type::simpleTypeName)
+            .map(String::toLowerCase)
             .orElse(null);
 
         if (tableFormat) {
             sb.append(repeat(" ", indent + 4));
             sb.append("* - ");
-            sb.append(String.format(":attribute:`%s`", attributeName));
-
-            if (resourceTypeName != null) {
-                sb.append(String.format(" :%s:`%s`", resourceTypeName, resourceTypeName));
-            }
-            sb.append("\n");
+            writeFieldName(sb, attributeName, genericTypeName, resourceTypeName);
             sb.append(repeat(" ", indent + 6));
             sb.append("- ");
 
@@ -316,12 +318,11 @@ public class ResourceDocGenerator {
         } else {
             sb.append(repeat(" ", indent));
 
-            if (resourceTypeName != null) {
-                sb.append(String.format(".. rst-class:: %s\n", resourceTypeName));
+            if (genericTypeName != null || resourceType != null) {
+                sb.append(".. rst-class:: label-container\n");
                 sb.append(repeat(" ", indent));
             }
-            sb.append(attributeName);
-            sb.append("\n");
+            writeFieldName(sb, attributeName, genericTypeName, resourceTypeName);
             sb.append(repeat(" ", indent + 4));
 
             writeLink(sb, link, resourceTypeName, indent + 4);
@@ -333,6 +334,19 @@ public class ResourceDocGenerator {
             sb.append(rest);
         }
         sb.append("\n\n");
+    }
+
+    private void writeFieldName(StringBuilder sb, String attributeName, String genericTypeName, String resourceTypeName) {
+        sb.append(String.format(":attribute:`%s`", attributeName));
+
+        if (genericTypeName != null) {
+            sb.append(String.format(" :collection-type:`%s`", genericTypeName));
+        }
+
+        if (resourceTypeName != null) {
+            sb.append(String.format(" :resource-type:`%s`", resourceTypeName));
+        }
+        sb.append("\n");
     }
 
     private void writeLink(StringBuilder sb, StringBuilder link, String resourceTypeName, int indent) {
