@@ -38,6 +38,8 @@ public class GyroDoclet extends Doclet {
 
     protected static final String QUERY_LINK_PATTERN = LINK_PATTERN + "Query";
 
+    protected static final String FINDER_SUFFIX = "-finder";
+
     public static boolean start(RootDoc root) {
         // Generate rst file for each resource.
         // Generate index for each group (i.e. java package) of resources.
@@ -97,9 +99,9 @@ public class GyroDoclet extends Doclet {
                 for (String resource : resources.keySet()) {
                     String rst = resources.get(resource);
 
-                    if(!resource.endsWith("-finder")) {
+                    if(!resource.endsWith(FINDER_SUFFIX)) {
 
-                        String finderResource = resource + "-finder";
+                        String finderResource = resource + FINDER_SUFFIX;
                         if (resources.containsKey(finderResource)) {
                             String finderRst = resources.get(finderResource);
                             String resourceLink = String.format(RESOURCE_LINK_PATTERN, group, resource);
@@ -110,7 +112,7 @@ public class GyroDoclet extends Doclet {
                                 .append("\n\n")
                                 .append(".. rst-class:: .query-resource-link")
                                 .append("\n")
-                                .append(":ref:`Query <").append(queryLink).append(">`")
+                                .append(":doc:`Query <").append(resource).append(FINDER_SUFFIX).append(">`")
                                 .append("\n\n")
                                 .append(rst).toString();
 
@@ -119,7 +121,7 @@ public class GyroDoclet extends Doclet {
                                 .append("\n\n")
                                 .append(".. rst-class:: .query-resource-link")
                                 .append("\n")
-                                .append(":ref:`Back to resource <").append(resourceLink).append(">`")
+                                .append(":doc:`Back to resource <").append(resource).append(">`")
                                 .append("\n\n")
                                 .append(finderRst).toString();
 
@@ -219,7 +221,7 @@ public class GyroDoclet extends Doclet {
         Collections.sort(keys);
 
         for (String resource : keys) {
-            if (resource != null && !resource.endsWith("-finder")) {
+            if (resource != null && !resource.endsWith(FINDER_SUFFIX)) {
                 sb.append("    ").append(resource);
                 sb.append("\n");
             }

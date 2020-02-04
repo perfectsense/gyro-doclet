@@ -16,10 +16,12 @@
 
 package gyro.doclet;
 
+import java.util.Arrays;
 import java.util.Optional;
 import java.util.regex.Pattern;
 
 import com.google.common.base.CaseFormat;
+import com.psddev.dari.util.StringUtils;
 import com.sun.javadoc.AnnotationDesc;
 import com.sun.javadoc.ClassDoc;
 import com.sun.javadoc.MethodDoc;
@@ -55,7 +57,7 @@ public class ResourceDocGenerator {
         }
 
         if (isFinder) {
-            name = name + "-finder";
+            name = name + GyroDoclet.FINDER_SUFFIX;
         }
 
         providerPackage = packageDoc.name().substring(0, packageDoc.name().lastIndexOf('.'));
@@ -89,24 +91,17 @@ public class ResourceDocGenerator {
 
         generateHeader(sb);
 
-        sb.append("Attributes\n");
-        sb.append(repeat("-", 10));
-        sb.append("\n\n");
-
-        sb.append(".. role:: attribute\n\n");
-        sb.append(".. role:: resource-type\n\n");
-        sb.append(".. role:: collection-type\n\n");
-
-        sb.append(".. list-table::\n");
-        sb.append("    :widths: 30 70\n");
-        sb.append("    :header-rows: 1\n\n");
-        sb.append("    * - Attribute\n");
-        sb.append("      - Description\n\n");
-
-        if (writeAttributes(doc, sb, 0, false)) {
-            sb.append("Outputs\n");
-            sb.append(repeat("-", 7));
+        if (Arrays.stream(doc.methods())
+            .filter(e -> !StringUtils.isBlank(e.commentText()))
+            .findAny()
+            .isPresent()) {
+            sb.append("Attributes\n");
+            sb.append(repeat("-", 10));
             sb.append("\n\n");
+
+            sb.append(".. role:: attribute\n\n");
+            sb.append(".. role:: resource-type\n\n");
+            sb.append(".. role:: collection-type\n\n");
 
             sb.append(".. list-table::\n");
             sb.append("    :widths: 30 70\n");
@@ -114,9 +109,20 @@ public class ResourceDocGenerator {
             sb.append("    * - Attribute\n");
             sb.append("      - Description\n\n");
 
-            generateOutputs(doc, sb, 0);
-        }
+            if (writeAttributes(doc, sb, 0, false)) {
+                sb.append("Outputs\n");
+                sb.append(repeat("-", 7));
+                sb.append("\n\n");
 
+                sb.append(".. list-table::\n");
+                sb.append("    :widths: 30 70\n");
+                sb.append("    :header-rows: 1\n\n");
+                sb.append("    * - Attribute\n");
+                sb.append("      - Description\n\n");
+
+                generateOutputs(doc, sb, 0);
+            }
+        }
         return sb.toString();
     }
 
@@ -201,7 +207,7 @@ public class ResourceDocGenerator {
     }
 
     private String resourceName(String name) {
-        return String.format("%s::%s", namespace, name.replace("-finder",""));
+        return String.format("%s::%s", namespace, name.replace(GyroDoclet.FINDER_SUFFIX, ""));
     }
 
     private void generateHeader(StringBuilder sb) {
