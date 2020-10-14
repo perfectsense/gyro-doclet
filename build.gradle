@@ -44,7 +44,7 @@ sourceCompatibility = 1.8
 dependencies {
     compile "com.google.guava:guava:23.0"
     compile 'com.psddev:dari-util:3.3.607-xe0f27a'
-    compile "gyro:gyro-core:0.99.0-SNAPSHOT"
+    compile "gyro:gyro-core:0.99.5"
     compile files("${System.getProperty('java.home')}/../lib/tools.jar")
 
     checkstyle 'com.puppycrawl.tools:checkstyle:8.15'
