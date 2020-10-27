@@ -1,3 +1,5 @@
+import org.gradle.api.publish.maven.MavenPublication
+
 /*
  * Copyright 2019, Perfect Sense, Inc.
  *
@@ -21,25 +23,48 @@ plugins {
     id 'checkstyle'
 }
 
-version = "0.99.1-SNAPSHOT"
+def releaseVersion = '0.99.1'
+def releaseBuild = false;
 
 defaultTasks 'shadowJar'
 
-if (System.getenv("TRAVIS_BRANCH") == null) {
+if (System.getenv('TRAVIS_BRANCH') && System.getenv('TRAVIS_PULL_REQUEST') == 'false') {
+    defaultTasks 'build', 'publish'
+    check.dependsOn 'publish'
+    publish.dependsOn 'shadowJar'
+    releaseBuild = System.getenv('TRAVIS_BRANCH').startsWith("release/");
+} else {
     defaultTasks 'build', 'publishToMavenLocal'
     check.dependsOn 'publishToMavenLocal'
     publishToMavenLocal.dependsOn 'shadowJar'
-} else {
-    check.dependsOn 'publish'
 }
 
-tasks.jar.configure {
-    classifier = 'default'
-}
+group = 'gyro'
+version = releaseBuild ? releaseVersion : releaseVersion + '-SNAPSHOT'
 
 assemble.dependsOn shadowJar
 
-sourceCompatibility = 1.8
+java {
+    sourceCompatibility = JavaVersion.VERSION_1_8
+    targetCompatibility = JavaVersion.VERSION_1_8
+}
+
+repositories {
+    mavenLocal()
+    mavenCentral()
+
+    maven {
+        url 'https://artifactory.psdops.com/public'
+    }
+
+    maven {
+        url 'https://artifactory.psdops.com/gyro-snapshots'
+    }
+
+    maven {
+        url 'https://artifactory.psdops.com/gyro-releases'
+    }
+}
 
 dependencies {
     compile "com.google.guava:guava:23.0"
@@ -48,46 +73,6 @@ dependencies {
     compile files("${System.getProperty('java.home')}/../lib/tools.jar")
 
     checkstyle 'com.puppycrawl.tools:checkstyle:8.15'
-}
-
-repositories {
-    mavenLocal()
-    mavenCentral()
-
-    maven {
-        url "https://artifactory.psdops.com/public"
-    }
-    maven {
-        url "https://artifactory.psdops.com/gyro-snapshots"
-    }
-    maven {
-        url "https://artifactory.psdops.com/gyro-releases"
-    }
-}
-
-publishing {
-    publications {
-        shadow(MavenPublication) { publication ->
-            project.shadow.component(publication)
-            groupId = 'gyro'
-            artifactId = 'gyro-doclet'
-        }
-    }
-
-    repositories {
-        maven {
-            credentials {
-                username System.getenv("GRADLE_DEPLOY_USER")
-                password System.getenv("GRADLE_DEPLOY_PASSWORD")
-            }
-
-            if (project.version.endsWith('-SNAPSHOT')) {
-                url "https://artifactory.psdops.com/gyro-snapshots"
-            } else {
-                url "https://artifactory.psdops.com/gyro-releases"
-            }
-        }
-    }
 }
 
 checkstyle {
@@ -109,4 +94,28 @@ task checkstyle(type: Checkstyle) {
 shadowJar {
     baseName = 'gyro-doclet'
     classifier = ''
+}
+
+publishing {
+    publications {
+        maven(MavenPublication) {
+            from components.java
+        }
+    }
+
+    repositories {
+        maven {
+            credentials {
+                username System.getenv('GRADLE_DEPLOY_USER')
+                password System.getenv('GRADLE_DEPLOY_PASSWORD')
+            }
+
+            if (releaseBuild) {
+                url 'https://artifactory.psdops.com/gyro-releases'
+
+            } else {
+                url 'https://artifactory.psdops.com/gyro-snapshots'
+            }
+        }
+    }
 }
