@@ -23,7 +23,7 @@ plugins {
     id 'checkstyle'
 }
 
-def releaseVersion = '1.0.0'
+def releaseVersion = '1.0.1'
 def releaseBuild = false;
 
 defaultTasks 'shadowJar'
