@@ -23,7 +23,7 @@ plugins {
     id 'checkstyle'
 }
 
-def releaseVersion = '0.99.2'
+def releaseVersion = '1.0.0'
 def releaseBuild = false;
 
 defaultTasks 'shadowJar'
@@ -69,7 +69,7 @@ repositories {
 dependencies {
     compile "com.google.guava:guava:23.0"
     compile 'com.psddev:dari-util:3.3.607-xe0f27a'
-    compile "gyro:gyro-core:0.99.5"
+    compile "gyro:gyro-core:1.0.0"
     compile files("${System.getProperty('java.home')}/../lib/tools.jar")
 
     checkstyle 'com.puppycrawl.tools:checkstyle:8.15'
