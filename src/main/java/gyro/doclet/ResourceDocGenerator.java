@@ -110,7 +110,7 @@ public class ResourceDocGenerator {
 
         StringBuilder sb = new StringBuilder();
 
-        System.out.println("Generating documentation for: " + resourceName());
+        //System.out.println("Generating documentation for: " + resourceName());
 
         generateHeader(sb);
 
@@ -527,6 +527,17 @@ public class ResourceDocGenerator {
             }
 
             commentText = String.format("%s %s", commentText, ConflictedFieldString);
+        }
+
+        if (isAnnotationPresent(methodDoc, ValidStrings.class) && noDocSet.contains("ValidStrings")) {
+            System.out.println(" --> start");
+            System.out.println(" --> start" + methodDoc.returnType());
+            if (methodDoc.returnType().isPrimitive()) {
+                MethodDoc[] enumConstants = methodDoc.getClass().getEnumConstants();
+                if (enumConstants != null) {
+                    System.out.println("--> " + enumConstants[0].toString());
+                }
+            }
         }
 
         // Valid Strings
