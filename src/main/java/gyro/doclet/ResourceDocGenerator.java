@@ -562,7 +562,7 @@ public class ResourceDocGenerator {
             // Replace last "," with an "or"
             if (validNumberList.size() > 1) {
                 validNumber = String.format(
-                    "Valid values are ``%s %s%s`.",
+                    "Valid values are ``%s %s%s``.",
                     validNumber.substring(0, validNumber.lastIndexOf(",")),
                     (isCollection ? "and" : "or"),
                     validNumber.substring(validNumber.lastIndexOf(",") + 1));
